@@ -31,6 +31,7 @@ pip install -r requirements.txt
 
 ```bash
 python -m src.finance.cli import-csv data/sample.csv --account "HDFC Savings"
+python -m src.finance.cli import-csv data/hdfc_sample.csv --account "HDFC Savings" --bank hdfc
 python -m src.finance.cli categorize
 python -m src.finance.cli report 2026-10
 ```
@@ -87,7 +88,8 @@ data/sample.csv   # fake sample data
 
 ## Roadmap
 
-- Per-bank CSV parsers (separate debit/credit columns for HDFC, SBI, ICICI)
+- Parsers for more banks (SBI, ICICI)
 - User-defined categorization rules stored in the database
 - Budget limits with alerts
 - Charts and a simple web dashboard
+
