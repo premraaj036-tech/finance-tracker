@@ -1,11 +1,11 @@
-import csv
-import datetime as dt
-from decimal import Decimal, InvalidOperation
+﻿import csv
+from decimal import InvalidOperation
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
 from .models import Account, Transaction
+from .parsers import PARSERS
 
 
 def get_or_create_account(session: Session, name: str) -> Account:
@@ -17,20 +17,26 @@ def get_or_create_account(session: Session, name: str) -> Account:
     return account
 
 
-def import_csv(session: Session, path: str | Path, account_name: str) -> dict:
-    """Import a CSV (date,description,amount) into the given account.
+def import_csv(
+    session: Session, path: str | Path, account_name: str, bank: str = "generic"
+) -> dict:
+    """Import a bank CSV into the given account.
 
     Returns counts: {"added": n, "skipped": n, "errors": n}
     """
+    if bank not in PARSERS:
+        raise ValueError(f"Unknown bank '{bank}'. Choose from: {', '.join(PARSERS)}")
+    parse = PARSERS[bank]
+
     account = get_or_create_account(session, account_name)
     added = skipped = errors = 0
 
     with open(path, newline="", encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
+        for raw in csv.DictReader(f):
+            # Bank exports often have stray spaces in the header names
+            row = {(k or "").strip(): (v or "") for k, v in raw.items()}
             try:
-                tx_date = dt.date.fromisoformat(row["date"].strip())
-                description = row["description"].strip()
-                amount = Decimal(row["amount"].strip())
+                tx_date, description, amount = parse(row)
             except (KeyError, ValueError, InvalidOperation):
                 errors += 1
                 continue

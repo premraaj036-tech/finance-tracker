@@ -12,10 +12,15 @@ app = typer.Typer(help="Personal finance tracker.")
 def import_csv_command(
     path: str = typer.Argument(..., help="Path to the bank CSV file"),
     account: str = typer.Option("Default", "--account", "-a", help="Account name"),
+    bank: str = typer.Option("generic", "--bank", "-b", help="Bank format: generic or hdfc"),
 ):
     """Import transactions from a CSV file."""
     session = get_session()
-    result = run_import(session, path, account)
+    try:
+        result = run_import(session, path, account, bank)
+    except ValueError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(code=1)
     typer.echo(
         f"Imported: {result['added']} added, "
         f"{result['skipped']} duplicates skipped, {result['errors']} errors."
